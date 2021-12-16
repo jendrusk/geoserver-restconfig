@@ -26,6 +26,7 @@ from geoserver.style import Style
 from geoserver.support import prepare_upload_bundle, build_url
 from geoserver.layergroup import LayerGroup, UnsavedLayerGroup
 from geoserver.workspace import workspace_from_index, Workspace
+from geoserver.user import user_from_index
 import os
 import re
 import base64
@@ -1367,3 +1368,54 @@ class Catalog(object):
     #         raise NotImplementedError()
     #     elif ogc_type.lower() == "wmts":
     #         raise NotImplementedError()
+
+    # def create_user(self, name, uri):
+    #     xml = (
+    #         "<namespace>"
+    #         "<prefix>{name}</prefix>"
+    #         "<uri>{uri}</uri>"
+    #         "</namespace>"
+    #     ).format(name=name, uri=uri)
+    #
+    #     headers = {"Content-Type": "application/xml"}
+    #     workspace_url = self.service_url + "/namespaces/"
+    #
+    #     resp = self.http_request(workspace_url, method='post', data=xml, headers=headers)
+    #     if resp.status_code not in (200, 201, 202):
+    #         raise FailedRequestError('Failed to create workspace {} : {}, {}'.format(name, resp.status_code, resp.text))
+    #
+    #     self._cache.pop("{}/workspaces.xml".format(self.service_url), None)
+    #     workspaces = self.get_workspaces(names=name)
+    #     # Can only have one workspace with this name
+    #     return workspaces[0] if workspaces else None
+
+    def get_users(self, names=None):
+        '''
+          Returns a list of users in the catalog.
+          If names is specified, will only return users that match.
+          names can either be a comma delimited string or an array.
+          Will return an empty list if no users are found (unlikely).
+        '''
+        if names is None:
+            names = []
+        elif isinstance(names, string_types):
+            names = [s.strip() for s in names.split(',') if s.strip()]
+
+        data = self.get_xml("{}/security/usergroup/users/".format(self.service_url))
+        users = []
+        users.extend([user_from_index(self, node) for node in data.findall("user")])
+
+        if users and names:
+            return ([ws for ws in users if ws.name in names])
+
+        return users
+
+    # def get_user(self, name):
+    #     '''
+    #       returns a single workspace object.
+    #       Will return None if no workspace is found.
+    #       Will raise an error if more than one workspace with the same name is found.
+    #     '''
+    #
+    #     workspaces = self.get_workspaces(names=name)
+    #     return self._return_first_item(workspaces)
