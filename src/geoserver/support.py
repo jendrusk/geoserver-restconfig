@@ -145,6 +145,14 @@ def write_bool(name):
     return write
 
 
+def write_int(name):
+    def write(builder, b):
+        builder.start(name, dict())
+        builder.data(str(b))
+        builder.end(name)
+    return write
+
+
 def write_bbox(name):
     def write(builder, b):
         builder.start(name, dict())

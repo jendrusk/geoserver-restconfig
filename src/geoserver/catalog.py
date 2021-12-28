@@ -13,6 +13,7 @@ import logging
 from datetime import datetime, timedelta
 from geoserver.layer import Layer
 from geoserver.resource import FeatureType
+from geoserver.service import service_from_index, ServiceWmsSettings
 from geoserver.store import (
     coveragestore_from_index,
     datastore_from_index,
@@ -142,6 +143,10 @@ class Catalog(object):
         self.client.mount("{}://".format(parsed_url.scheme), HTTPAdapter(max_retries=retry))
 
     def http_request(self, url, data=None, method='get', headers={}, files=None):
+
+        if headers.get("accept") is None:
+            headers["accept"] = "application/xml"
+
         req_method = getattr(self.client, method.lower())
 
         if self.access_token:
@@ -1314,3 +1319,75 @@ class Catalog(object):
             feature_type_names.extend([fn['name'] for fn in data])
 
             return feature_type_names
+
+    def get_services(self, ogc_type = None):
+        '''
+          Returns a list of wms services in the catalog.
+          Will return an empty list if no services are found.
+        '''
+
+        data = self.get_xml("{service_url}/services/{ogc_type}/settings".format(
+            service_url=self.service_url, ogc_type=ogc_type))
+        services = []
+        services.append(service_from_index(self, data))
+        workspaces = self.get_workspaces()
+        for ws in workspaces:
+            try:
+                data = self.get_xml("{service_url}/services/{ogc_type}/workspaces/{workspace}/settings".format(
+                    service_url=self.service_url, ogc_type=ogc_type, workspace=ws.name))
+                services.append(service_from_index(self, data))
+            except FailedRequestError as e:
+                logger.debug("Not found {ogc_type} service for workspace {workspace}". format(
+                    workspace=ws.name, ogc_type=ogc_type)
+                )
+
+        return services
+
+    def create_service(self, ogc_type=None, workspace=None):
+
+        KNOWN_TYPES = ["wms", "wfs", "wcs", "wmts"]
+
+        if ogc_type is None:
+            logger.error("You have to specify OGC Service Type ({types})".format(types=",".join(KNOWN_TYPES)))
+            return None
+
+        if ogc_type.lower() not in KNOWN_TYPES:
+            logger.error("Unknown OGC Service Type (known are: {types})".format(types=",".join(KNOWN_TYPES)))
+            return None
+
+        if workspace is None:
+            logger.info("Global services are created by default")
+
+        if ogc_type.lower() == "wms":
+            service = ServiceWmsSettings(catalog=self, workspace=workspace)
+            service.enabled = True
+            self.save(service)
+            service.refresh()
+            return service
+        elif ogc_type.lower() == "wfs":
+            raise NotImplementedError()
+        elif ogc_type.lower() == "wcs":
+            raise NotImplementedError()
+        elif ogc_type.lower() == "wmts":
+            raise NotImplementedError()
+
+
+
+        # xml = (
+        #     "<namespace>"
+        #     "<prefix>{name}</prefix>"
+        #     "<uri>{uri}</uri>"
+        #     "</namespace>"
+        # ).format(name=name, uri=uri)
+        #
+        # headers = {"Content-Type": "application/xml"}
+        # workspace_url = self.service_url + "/namespaces/"
+        #
+        # resp = self.http_request(workspace_url, method='post', data=xml, headers=headers)
+        # if resp.status_code not in (200, 201, 202):
+        #     raise FailedRequestError('Failed to create workspace {} : {}, {}'.format(name, resp.status_code, resp.text))
+        #
+        # self._cache.pop("{}/workspaces.xml".format(self.service_url), None)
+        # workspaces = self.get_workspaces(names=name)
+        # # Can only have one workspace with this name
+        # return workspaces[0] if workspaces else None
