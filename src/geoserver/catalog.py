@@ -1343,51 +1343,27 @@ class Catalog(object):
 
         return services
 
-    def create_service(self, ogc_type=None, workspace=None):
-
-        KNOWN_TYPES = ["wms", "wfs", "wcs", "wmts"]
-
-        if ogc_type is None:
-            logger.error("You have to specify OGC Service Type ({types})".format(types=",".join(KNOWN_TYPES)))
-            return None
-
-        if ogc_type.lower() not in KNOWN_TYPES:
-            logger.error("Unknown OGC Service Type (known are: {types})".format(types=",".join(KNOWN_TYPES)))
-            return None
-
-        if workspace is None:
-            logger.info("Global services are created by default")
-
-        if ogc_type.lower() == "wms":
-            service = ServiceWmsSettings(catalog=self, workspace=workspace)
-            service.enabled = True
-            self.save(service)
-            service.refresh()
-            return service
-        elif ogc_type.lower() == "wfs":
-            raise NotImplementedError()
-        elif ogc_type.lower() == "wcs":
-            raise NotImplementedError()
-        elif ogc_type.lower() == "wmts":
-            raise NotImplementedError()
-
-
-
-        # xml = (
-        #     "<namespace>"
-        #     "<prefix>{name}</prefix>"
-        #     "<uri>{uri}</uri>"
-        #     "</namespace>"
-        # ).format(name=name, uri=uri)
-        #
-        # headers = {"Content-Type": "application/xml"}
-        # workspace_url = self.service_url + "/namespaces/"
-        #
-        # resp = self.http_request(workspace_url, method='post', data=xml, headers=headers)
-        # if resp.status_code not in (200, 201, 202):
-        #     raise FailedRequestError('Failed to create workspace {} : {}, {}'.format(name, resp.status_code, resp.text))
-        #
-        # self._cache.pop("{}/workspaces.xml".format(self.service_url), None)
-        # workspaces = self.get_workspaces(names=name)
-        # # Can only have one workspace with this name
-        # return workspaces[0] if workspaces else None
+    # global services are enabled by default, enabling services in workspaces using rest is broken in geoserver for now
+    # def create_service(self, ogc_type=None, workspace=None):
+    #
+    #     KNOWN_TYPES = ["wms", "wfs", "wcs", "wmts"]
+    #
+    #     if ogc_type is None:
+    #         logger.error("You have to specify OGC Service Type ({types})".format(types=",".join(KNOWN_TYPES)))
+    #         return None
+    #
+    #     if ogc_type.lower() not in KNOWN_TYPES:
+    #         logger.error("Unknown OGC Service Type (known are: {types})".format(types=",".join(KNOWN_TYPES)))
+    #         return None
+    #
+    #     if workspace is None:
+    #         logger.info("Global services are created by default")
+    #
+    #     if ogc_type.lower() == "wms":
+    #         raise NotImplementedError()
+    #     elif ogc_type.lower() == "wfs":
+    #         raise NotImplementedError()
+    #     elif ogc_type.lower() == "wcs":
+    #         raise NotImplementedError()
+    #     elif ogc_type.lower() == "wmts":
+    #         raise NotImplementedError()

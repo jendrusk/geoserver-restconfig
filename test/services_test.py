@@ -317,15 +317,6 @@ class ServicesTests(unittest.TestCase):
             self.assertEqual(getattr(wmts_srv, attr), test_int, msg="Invalid value for object {}".format(attr))
 
 
-    # def test_workspace_wms(self):
-    #
-    #     wms_srvs = self.cat.get_services(ogc_type="wms")
-    #     wms_srvs_ws = [x for x in wms_srvs if x.workspace == self.test_ws]
-    #     self.assertEqual(len(wms_srvs_ws), 0)
-    #
-    #     wms_srv = self.cat.create_service(ogc_type="wms", workspace=self.test_ws.name)
-
-
 if __name__ == '__main__':
     ans = input("This test could break your Geoserver configuration - are U sure? (y/n)")
     if ans.lower() == "y":
