@@ -89,8 +89,8 @@ class ServicesTests(unittest.TestCase):
         self.bkp_wfs_srv.dirty = {k: getattr(self.bkp_wfs_srv, k) for k, v in self.bkp_wfs_srv.writers.items()}
         self.bkp_wcs_srv = self.bkp_cat.get_services(ogc_type="wcs")[0]
         self.bkp_wcs_srv.dirty = {k: getattr(self.bkp_wcs_srv, k) for k, v in self.bkp_wcs_srv.writers.items()}
-        # self.bkp_wmts_srv = self.bkp_cat.get_services(ogc_type="wmts")[0]
-        # self.bkp_wmts_srv.dirty = {k: getattr(self.bkp_wmts_srv, k) for k, v in self.bkp_wmts_srv.writers.items()}
+        self.bkp_wmts_srv = self.bkp_cat.get_services(ogc_type="wmts")[0]
+        self.bkp_wmts_srv.dirty = {k: getattr(self.bkp_wmts_srv, k) for k, v in self.bkp_wmts_srv.writers.items()}
 
         # test workspace
         self.test_ws = self.cat.get_workspace("services_test_ws")
@@ -98,7 +98,7 @@ class ServicesTests(unittest.TestCase):
             self.test_ws = self.cat.create_workspace("services_test_ws", uri=self.cat.service_url)
 
         # enums for tests
-        self.wfs_enums = {
+        self.wms_enums = {
             "interpolation": ["Nearest", "Bilinear", "Bicubic"]
         }
         self.wfs_enums = {
@@ -114,7 +114,7 @@ class ServicesTests(unittest.TestCase):
         self.bkp_cat.save(self.bkp_wms_srv)
         self.bkp_cat.save(self.bkp_wfs_srv)
         self.bkp_cat.save(self.bkp_wcs_srv)
-        #self.bkp_cat.save(self.bkp_wmts_srv)
+        self.bkp_cat.save(self.bkp_wmts_srv)
 
     def test_global_wms(self):
 
@@ -137,7 +137,7 @@ class ServicesTests(unittest.TestCase):
 
         # test string
         attrs = [k for k, v in wms_srv.writers.items() if
-                 isinstance(getattr(wms_srv, k), str) and k not in self.wfs_enums.keys()]
+                 isinstance(getattr(wms_srv, k), str) and k not in self.wms_enums.keys()]
         for attr in attrs:
             test_str = ''.join(random.sample(string.ascii_lowercase, 10))
             setattr(wms_srv, attr, test_str)
@@ -147,9 +147,9 @@ class ServicesTests(unittest.TestCase):
             self.assertEqual(getattr(wms_srv, attr), test_str, msg="Invalid value for object {}".format(attr))
 
         # test enums
-        attrs = [k for k in self.wfs_enums.keys()]
+        attrs = [k for k in self.wms_enums.keys()]
         for attr in attrs:
-            test_str = self.wfs_enums[attr][random.randint(0, len(self.wfs_enums[attr]))]
+            test_str = self.wms_enums[attr][random.randint(0, len(self.wms_enums[attr]))]
             setattr(wms_srv, attr, test_str)
             self.cat.save(wms_srv)
             wms_srv.refresh()
@@ -247,9 +247,9 @@ class ServicesTests(unittest.TestCase):
             self.assertEqual(getattr(wcs_srv, attr), test_str, msg="Invalid value for object {}".format(attr))
 
         # test enums
-        attrs = [k for k in self.wfs_enums.keys()]
+        attrs = [k for k in self.wcs_enums.keys()]
         for attr in attrs:
-            test_str = self.wfs_enums[attr][random.randint(0, len(self.wfs_enums[attr]))]
+            test_str = self.wcs_enums[attr][random.randint(0, len(self.wcs_enums[attr]))]
             setattr(wcs_srv, attr, test_str)
             self.cat.save(wcs_srv)
             wcs_srv.refresh()
@@ -265,6 +265,57 @@ class ServicesTests(unittest.TestCase):
             wcs_srv.refresh()
             self.assertIsNone(wcs_srv.dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
             self.assertEqual(getattr(wcs_srv, attr), test_int, msg="Invalid value for object {}".format(attr))
+
+    def test_global_wmts(self):
+
+        self.wmts_srv = self.cat.get_services(ogc_type="wmts")[0]
+        wmts_srv = self.cat.get_services(ogc_type="wmts")[0]
+
+        # test boolean
+        attrs = [k for k, v in wmts_srv.writers.items() if isinstance(getattr(wmts_srv, k), bool)]
+        for attr in attrs:
+            setattr(wmts_srv, attr, False)
+            self.cat.save(wmts_srv)
+            wmts_srv.refresh()
+            self.assertIsNone(wmts_srv.dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
+            self.assertFalse(getattr(wmts_srv, attr))
+            setattr(wmts_srv, attr, True)
+            self.cat.save(wmts_srv)
+            wmts_srv.refresh()
+            self.assertIsNone(wmts_srv.dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
+            self.assertTrue(getattr(wmts_srv, attr), msg="Invalid value for object {}".format(attr))
+
+        # test string
+        attrs = [k for k, v in wmts_srv.writers.items() if
+                 isinstance(getattr(wmts_srv, k), str) and k not in self.wmts_enums.keys()]
+        for attr in attrs:
+            test_str = ''.join(random.sample(string.ascii_lowercase, 10))
+            setattr(wmts_srv, attr, test_str)
+            self.cat.save(wmts_srv)
+            wmts_srv.refresh()
+            self.assertIsNone(wmts_srv.dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
+            self.assertEqual(getattr(wmts_srv, attr), test_str, msg="Invalid value for object {}".format(attr))
+
+        # test enums
+        attrs = [k for k in self.wmts_enums.keys()]
+        for attr in attrs:
+            test_str = self.wmts_enums[attr][random.randint(0, len(self.wmts_enums[attr]))]
+            setattr(wmts_srv, attr, test_str)
+            self.cat.save(wmts_srv)
+            wmts_srv.refresh()
+            self.assertIsNone(wmts_srv.dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
+            self.assertEqual(getattr(wmts_srv, attr), test_str, msg="Invalid value for object {}".format(attr))
+
+        # test int
+        attrs = [k for k in wmts_srv.writers.keys() if type(getattr(wmts_srv, k)) == int]
+        for attr in attrs:
+            test_int = random.randint(1, 20)
+            setattr(wmts_srv, attr, test_int)
+            self.cat.save(wmts_srv)
+            wmts_srv.refresh()
+            self.assertIsNone(wmts_srv.dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
+            self.assertEqual(getattr(wmts_srv, attr), test_int, msg="Invalid value for object {}".format(attr))
+
 
     # def test_workspace_wms(self):
     #
