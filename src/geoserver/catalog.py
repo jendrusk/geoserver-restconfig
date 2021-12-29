@@ -26,7 +26,7 @@ from geoserver.style import Style
 from geoserver.support import prepare_upload_bundle, build_url
 from geoserver.layergroup import LayerGroup, UnsavedLayerGroup
 from geoserver.workspace import workspace_from_index, Workspace
-from geoserver.user import user_from_index
+from geoserver.security import user_from_index
 import os
 import re
 import base64
@@ -1410,12 +1410,59 @@ class Catalog(object):
 
         return users
 
-    # def get_user(self, name):
-    #     '''
-    #       returns a single workspace object.
-    #       Will return None if no workspace is found.
-    #       Will raise an error if more than one workspace with the same name is found.
-    #     '''
-    #
-    #     workspaces = self.get_workspaces(names=name)
-    #     return self._return_first_item(workspaces)
+    def get_master_pwd(self):
+
+        url = "{}/security/masterpw.xml".format(self.service_url)
+        resp = self.http_request(url)
+        masterpwd = None
+        if resp.status_code == 200:
+            content = resp.content
+            if isinstance(content, bytes):
+                content = content.decode('UTF-8')
+            dom = XML(content)
+            masterpwd = dom.find("oldMasterPassword").text if dom.find("oldMasterPassword") is not None else None
+        else:
+            raise FailedRequestError(resp.content)
+
+        return masterpwd
+
+
+    def set_master_pwd(self, new_pwd):
+        old_pwd = self.get_master_pwd()
+        if old_pwd == new_pwd:
+            return new_pwd
+
+        headers = {"Content-Type": "application/xml"}
+        url = "{}/security/masterpw.xml".format(self.service_url)
+        body = ("<masterPassword>"
+                "<oldMasterPassword>{old_pwd}</oldMasterPassword>"
+                "<newMasterPassword>{new_pwd}</newMasterPassword>"
+                "</masterPassword>").format(old_pwd=old_pwd, new_pwd=new_pwd)
+        resp = self.http_request(url, method="put", data=body, headers=headers)
+
+        masterpwd = None
+        if resp.status_code == 200:
+            res = new_pwd
+            self.reload()
+        else:
+            raise FailedRequestError(resp.content)
+        return res
+
+    def set_my_pwd(self, new_pwd):
+        headers = {"Content-Type": "application/xml"}
+        url = "{}/security/self/password.xml".format(self.service_url)
+        body = ("<userPassword>"
+                "<newPassword>{new_pwd}</newPassword>"
+                "</userPassword>").format(new_pwd=new_pwd)
+        resp = self.http_request(url, method="put", data=body, headers=headers)
+
+        if resp.status_code == 200:
+            res = new_pwd
+            self.reload()
+            self.password = new_pwd
+            self.reload()
+
+        else:
+            raise FailedRequestError(resp.content)
+        return res
+
