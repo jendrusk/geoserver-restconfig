@@ -27,6 +27,7 @@ from geoserver.support import prepare_upload_bundle, build_url
 from geoserver.layergroup import LayerGroup, UnsavedLayerGroup
 from geoserver.workspace import workspace_from_index, Workspace
 from geoserver.security import user_from_index
+from geoserver.settings import GlobalSettings
 import os
 import re
 import base64
@@ -1466,3 +1467,5 @@ class Catalog(object):
             raise FailedRequestError(resp.content)
         return res
 
+    def get_settings(self):
+        return GlobalSettings(self)
