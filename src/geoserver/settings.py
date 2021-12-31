@@ -14,91 +14,129 @@ try:
 except:
     from urlparse import urljoin
 
-from geoserver.support import ResourceInfo, xml_property, write_bool, write_string, write_int
+from geoserver.support import (
+    ResourceInfo, StaticResourceInfo,
+    xml_property,
+    read_bool, read_float, read_int, read_string,
+    write_bool, write_float, write_int, write_string)
 
 
-def write_settings(settings):
-    def write(builder, settings):
-        params = ["id", "contact", "charset", "numDecimals",
-                  "onlineResource", "verbose", "verboseExceptions", "localWorkspaceIncludesPrefix" ]
-
-        for param in params:
-            if param == "contact":
-                cparams = ["addressCity", "addressCountry", "addressType",
-                           "contactEmail", "contactOrganization", "contactPerson", "contactPosition"]
-                for cparam in cparams:
-                    builder.start(cparam, dict())
-                    builder.data(getattr(settings.contact, cparam))
-                    builder.end(cparam)
-            else:
-                builder.start(param, dict())
-                builder.data(getattr(settings, param))
-                builder.end(param)
-
+def write_subclass(sbc):
+    def write(builder, sbc):
+        sbc.serialize_all(builder)
     return write
 
 
-class Contact(object):
+class Contact(StaticResourceInfo):
+    resource_type = "contact"
+
     def __init__(self, dom):
-        self.addressCity = dom.find("addressCity").text if dom.find("addressCity") is not None else None
-        self.addressCountry = dom.find("addressCountry").text if dom.find("addressCountry") is not None else None
-        self.addressType = dom.find("addressType").text if dom.find("addressType") is not None else None
-        self.contactEmail = dom.find("contactEmail").text if dom.find("contactEmail") is not None else None
-        self.contactOrganization = dom.find("contactOrganization").text if dom.find("contactOrganization") is not None else None
-        self.contactPerson = dom.find("contactPerson").text if dom.find("contactPerson") is not None else None
-        self.contactPosition = dom.find("contactPosition").text if dom.find("contactPosition") is not None else None
+        super(Contact, self).__init__()
+        self.dom = dom
+
+    addressCity = xml_property("addressCity", read_string)
+    addressCountry = xml_property("addressCountry", read_string)
+    addressType = xml_property("addressType", read_string)
+    contactEmail = xml_property("contactEmail", read_string)
+    contactOrganization = xml_property("contactOrganization", read_string)
+    contactPerson = xml_property("contactPerson", read_string)
+    contactPosition = xml_property("contactPosition", read_string)
+
+    writers = {
+    "addressCity": write_string("addressCity"),
+    "addressCountry": write_string("addressCountry"),
+    "addressType": write_string("addressType"),
+    "contactEmail": write_string("contactEmail"),
+    "contactOrganization": write_string("contactOrganization"),
+    "contactPerson": write_string("contactPerson"),
+    "contactPosition": write_string("contactPosition")
+    }
 
 
-class Settings(object):
+
+class Settings(StaticResourceInfo):
+    resource_type = "settings"
+
     def __init__(self, dom):
-        self.id = dom.find("id").text if dom.find("id") is not None else None
-        self.contact = Contact(dom=dom)
-        self.charset = dom.find("charset").text if dom.find("charset") is not None else None
-        self.numDecimals = dom.find("numDecimals").text if dom.find("numDecimals") is not None else None
-        self.onlineResource = dom.find("onlineResource").text if dom.find("onlineResource") is not None else None
-        self.verbose = dom.find("verbose").text if dom.find("verbose") is not None else None
-        self.verboseExceptions = dom.find("verboseExceptions").text if dom.find("verboseExceptions") is not None else None
-        self.localWorkspaceIncludesPrefix = dom.find("localWorkspaceIncludesPrefix").text if dom.find("localWorkspaceIncludesPrefix") is not None else None
-        self.contact = None
+        super(Settings, self).__init__()
+        self.dom = dom
+
+    id = xml_property("id", read_string)
+    contact = xml_property("contact", Contact)
+    charset = xml_property("charset", read_string)
+    numDecimals = xml_property("numDecimals", read_int)
+    onlineResource = xml_property("onlineResource", read_string)
+    verbose = xml_property("verbose", read_bool)
+    verboseExceptions = xml_property("verboseExceptions", read_bool)
+    localWorkspaceIncludesPrefix = xml_property("localWorkspaceIncludesPrefix", read_bool)
+
+    writers = {
+    "id": write_string("id"),
+    "contact": write_subclass("contact"),
+    "charset": write_string("charset"),
+    "numDecimals": write_int("numDecimals"),
+    "onlineResource": write_string("onlineResource"),
+    "verbose": write_bool("verbose"),
+    "verboseExceptions": write_bool("verboseExceptions"),
+    "localWorkspaceIncludesPrefix": write_bool("localWorkspaceIncludesPrefix"),
+    }
 
 
-def write_dataclass(dataclass):
-    def write(builder, dataclass):
-        params = vars(dataclass)
-        write_exclude = ["main_elem"]
-        write_params = [x for x in params if x not in write_exclude]
-        for param in write_params:
-            builder.start(param, dict())
-            builder.data(getattr(dataclass, param))
-            builder.end(param)
+class Jai(ResourceInfo):
 
-    return write
-
-
-class Jai(object):
     def __init__(self, dom):
-        self.main_elem = "jai"
-        self.allowInterpolation = dom.find("allowInterpolation").text if dom.find("allowInterpolation") is not None else None
-        self.recycling = dom.find("recycling").text if dom.find("recycling") is not None else None
-        self.tilePriority = dom.find("tilePriority").text if dom.find("tilePriority") is not None else None
-        self.tileThreads = dom.find("tileThreads").text if dom.find("tileThreads") is not None else None
-        self.memoryCapacity = dom.find("memoryCapacity").text if dom.find("memoryCapacity") is not None else None
-        self.memoryThreshold = dom.find("memoryThreshold").text if dom.find("memoryThreshold") is not None else None
-        self.imageIOCache = dom.find("imageIOCache").text if dom.find("imageIOCache") is not None else None
-        self.pngAcceleration = dom.find("pngAcceleration").text if dom.find("pngAcceleration") is not None else None
-        self.jpegAcceleration = dom.find("jpegAcceleration").text if dom.find("jpegAcceleration") is not None else None
-        self.allowNativeMosaic = dom.find("allowNativeMosaic").text if dom.find("allowNativeMosaic") is not None else None
-        self.allowNativeWarp = dom.find("allowNativeWarp").text if dom.find("allowNativeWarp") is not None else None
+        super(Jai, self).__init__()
+        self.dom = dom
+
+    resource_type = "jai"
+
+    allowInterpolation = xml_property("allowInterpolation", read_bool)
+    recycling = xml_property("recycling", read_bool)
+    tilePriority = xml_property("tilePriority", read_int)
+    tileThreads = xml_property("tileThreads", read_int)
+    memoryCapacity = xml_property("memoryCapacity", read_float)
+    memoryThreshold = xml_property("memoryThreshold", read_float)
+    imageIOCache = xml_property("imageIOCache", read_bool)
+    pngAcceleration = xml_property("pngAcceleration", read_bool)
+    jpegAcceleration = xml_property("jpegAcceleration", read_bool)
+    allowNativeMosaic = xml_property("allowNativeMosaic", read_bool)
+    allowNativeWarp = xml_property("allowNativeWarp", read_bool)
+
+    writers = {
+    "allowInterpolation": write_bool("allowInterpolation"),
+    "recycling": write_bool("recycling"),
+    "tilePriority": write_int("tilePriority"),
+    "tileThreads": write_int("tileThreads"),
+    "memoryCapacity": write_float("memoryCapacity"),
+    "memoryThreshold": write_float("memoryThreshold"),
+    "imageIOCache": write_bool("imageIOCache"),
+    "pngAcceleration": write_bool("pngAcceleration"),
+    "jpegAcceleration": write_bool("jpegAcceleration"),
+    "allowNativeMosaic": write_bool("allowNativeMosaic"),
+    "allowNativeWarp": write_bool("allowNativeWarp")}
 
 
-class CoverageAccess(object):
+class CoverageAccess(StaticResourceInfo):
+
     def __init__(self, dom):
-        self.main_elem = "coverageAccess"
-        self.maxPoolSize = dom.find("maxPoolSize").text if dom.find("maxPoolSize") is not None else None
-        self.corePoolSize = dom.find("corePoolSize").text if dom.find("corePoolSize") is not None else None
-        self.keepAliveTime = dom.find("keepAliveTime").text if dom.find("keepAliveTime") is not None else None
-        self.queueType = dom.find("queueType").text if dom.find("queueType") is not None else None
-        self.imageIOCacheThreshold = dom.find("imageIOCacheThreshold").text if dom.find("imageIOCacheThreshold") is not None else None
+        super(CoverageAccess, self).__init__()
+        self.dom = dom
+
+    resource_type = "coverageAccess"
+
+    maxPoolSize = xml_property("maxPoolSize", read_int)
+    corePoolSize = xml_property("corePoolSize", read_int)
+    keepAliveTime = xml_property("keepAliveTime", read_int)
+    queueType = xml_property("queueType", read_string)
+    imageIOCacheThreshold = xml_property("imageIOCacheThreshold", read_int)
+
+    writers = {
+        "maxPoolSize": write_int("maxPoolSize"),
+        "corePoolSize": write_int("corePoolSize"),
+        "keepAliveTime": write_int("keepAliveTime"),
+        "queueType": write_string("queueType"),
+        "imageIOCacheThreshold": write_int("imageIOCacheThreshold")
+    }
 
 
 class GlobalSettings(ResourceInfo):
@@ -128,9 +166,9 @@ class GlobalSettings(ResourceInfo):
     xmlPostRequestLogBufferSize = xml_property("xmlPostRequestLogBufferSize", lambda x: int(x.text))
 
     writers = {
-        'settings': write_settings("enabled"),
-        'jai': write_dataclass("enabled"),
-        'coverageAccess': write_dataclass("enabled"),
+        'settings': write_subclass("enabled"),
+        'jai': write_subclass("enabled"),
+        'coverageAccess': write_subclass("enabled"),
         'updateSequence': write_int("enabled"),
         'featureTypeCacheSize': write_int("enabled"),
         'globalServices': write_bool("enabled"),

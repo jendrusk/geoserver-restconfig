@@ -81,14 +81,33 @@ class SettingsTests(unittest.TestCase):
         self.cat = Catalog(GSPARAMS['GSURL'], username=GSPARAMS['GSUSER'], password=GSPARAMS['GSPASSWORD'])
         self.bkp_cat = Catalog(GSPARAMS['GSURL'], username=GSPARAMS['GSUSER'], password=GSPARAMS['GSPASSWORD'])
         self.gs_version = self.cat.get_short_version()
+        self.bkp_global_settings = self.bkp_cat.get_global_settings()
 
     def tearDown(self) -> None:
-        pass
-
+        self.bkp_global_settings.dirty_all()
+        self.bkp_cat.save(self.bkp_global_settings)
 
     def test_get_settings(self):
-        settings = self.cat.get_settings()
+        glob = self.cat.get_global_settings()
+        self.assertIsNotNone(glob)
+
+    def test_set_global(self):
+
+        a = glob.jai.allowInterpolation
+        glob.jai.allowInterpolation = 'true'
+        msg = glob.message()
         x=1
 
+    def test_set_settings(self):
+        pass
+
+    def test_set_contact(self):
+        pass
+
+    def test_set_jai(self):
+        pass
+
+    def test_set_coverage_access(self):
+        pass
 
 

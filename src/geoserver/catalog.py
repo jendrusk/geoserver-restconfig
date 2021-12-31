@@ -1467,5 +1467,5 @@ class Catalog(object):
             raise FailedRequestError(resp.content)
         return res
 
-    def get_settings(self):
+    def get_global_settings(self):
         return GlobalSettings(self)
