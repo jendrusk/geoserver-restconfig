@@ -1,3 +1,4 @@
+from copy import deepcopy
 import unittest
 import string
 import random
@@ -8,6 +9,7 @@ import subprocess
 import re
 import time
 from geoserver.catalog import Catalog
+from geoserver.support import StaticResourceInfo
 
 if GSPARAMS['GEOSERVER_HOME']:
     dest = GSPARAMS['DATA_DIR']
@@ -81,7 +83,12 @@ class SettingsTests(unittest.TestCase):
         self.cat = Catalog(GSPARAMS['GSURL'], username=GSPARAMS['GSUSER'], password=GSPARAMS['GSPASSWORD'])
         self.bkp_cat = Catalog(GSPARAMS['GSURL'], username=GSPARAMS['GSUSER'], password=GSPARAMS['GSPASSWORD'])
         self.gs_version = self.cat.get_short_version()
-        self.bkp_global_settings = self.bkp_cat.get_global_settings()
+        self.bkp_global_settings = deepcopy(self.bkp_cat.get_global_settings())
+        self.global_enums = {}
+        self.settings_enums = {}
+        self.contact_enums = {}
+        self.coverageAccess_enums = {"queueType": ["UNBOUNDED", "DIRECT"]}
+        self.jai_enums = {}
 
     def tearDown(self) -> None:
         self.bkp_global_settings.dirty_all()
@@ -93,21 +100,110 @@ class SettingsTests(unittest.TestCase):
 
     def test_set_global(self):
 
-        a = glob.jai.allowInterpolation
-        glob.jai.allowInterpolation = 'true'
-        msg = glob.message()
-        x=1
+        test_class = self.cat.get_global_settings()
+
+        # test boolean
+        attrs = [k for k, v in test_class.writers.items() if isinstance(getattr(test_class, k), bool)]
+        enums = getattr(self, test_class.resource_type + "_enums")
+        for attr in attrs:
+            setattr(test_class, attr, False)
+            self.cat.save(test_class)
+            test_class.refresh()
+            self.assertIsNone(test_class.dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
+            self.assertFalse(getattr(test_class, attr))
+            setattr(test_class, attr, True)
+            self.cat.save(test_class)
+            test_class.refresh()
+            self.assertIsNone(test_class.dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
+            self.assertTrue(getattr(test_class, attr), msg="Invalid value for object {}".format(attr))
+
+        # test string
+        attrs = [k for k, v in test_class.writers.items() if
+                 isinstance(getattr(test_class, k), str) and k not in enums.keys()]
+        for attr in attrs:
+            test_str = ''.join(random.sample(string.ascii_lowercase, 10))
+            setattr(test_class, attr, test_str)
+            self.cat.save(test_class)
+            test_class.refresh()
+            self.assertIsNone(test_class.dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
+            self.assertEqual(getattr(test_class, attr), test_str, msg="Invalid value for object {}".format(attr))
+
+        # test enums
+        attrs = [k for k in enums.keys()]
+        for attr in attrs:
+            test_str = enums[attr][random.randint(0, len(enums[attr])-1)]
+            setattr(test_class, attr, test_str)
+            self.cat.save(test_class)
+            test_class.refresh()
+            self.assertIsNone(test_class.dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
+            self.assertEqual(getattr(test_class, attr), test_str, msg="Invalid value for object {}".format(attr))
+
+        # test int
+        attrs = [k for k in test_class.writers.keys() if type(getattr(test_class, k)) == int]
+        for attr in attrs:
+            test_int = random.randint(1, 20)
+            setattr(test_class, attr, test_int)
+            self.cat.save(test_class)
+            test_class.refresh()
+            self.assertIsNone(test_class.dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
+            self.assertEqual(getattr(test_class, attr), test_int, msg="Invalid value for object {}".format(attr))
 
     def test_set_settings(self):
-        pass
+        glob = self.cat.get_global_settings()
+        subclasses = [x for x in glob.writers.keys() if issubclass(type(getattr(glob, x)), StaticResourceInfo)]
 
-    def test_set_contact(self):
-        pass
+        for subcls in subclasses:
 
-    def test_set_jai(self):
-        pass
+            # test boolean
+            attrs = [k for k, v in getattr(glob, subcls).writers.items() if isinstance(getattr(getattr(glob, subcls), k), bool)]
+            enums = getattr(self, getattr(glob, subcls).resource_type + "_enums")
 
-    def test_set_coverage_access(self):
-        pass
+            for attr in attrs:
+                setattr(getattr(glob, subcls), attr, False)
+                self.cat.save(glob)
+                glob.refresh()
+                self.assertIsNone(getattr(glob, subcls).dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
+                self.assertFalse(getattr(getattr(glob, subcls), attr))
+                setattr(getattr(glob, subcls), attr, True)
+                self.cat.save(glob)
+                glob.refresh()
+                self.assertIsNone(getattr(glob, subcls).dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
+                self.assertTrue(getattr(getattr(glob, subcls), attr), msg="Invalid value for object {}".format(attr))
+
+            # test string
+            attrs = [k for k, v in getattr(glob, subcls).writers.items() if
+                     isinstance(getattr(getattr(glob, subcls), k), str) and k not in enums.keys()]
+            for attr in attrs:
+                test_str = ''.join(random.sample(string.ascii_lowercase, 10))
+                setattr(getattr(glob, subcls), attr, test_str)
+                self.cat.save(glob)
+                glob.refresh()
+                self.assertIsNone(getattr(glob, subcls).dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
+                self.assertEqual(getattr(getattr(glob, subcls), attr), test_str,
+                                 msg="Invalid value for object {}".format(attr))
+
+            # test enums
+            attrs = [k for k in enums.keys()]
+            for attr in attrs:
+                test_str = enums[attr][random.randint(0, len(enums[attr])-1)]
+                setattr(getattr(glob, subcls), attr, test_str)
+                self.cat.save(glob)
+                glob.refresh()
+                self.assertIsNone(getattr(glob, subcls).dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
+                self.assertEqual(getattr(getattr(glob, subcls), attr), test_str,
+                                 msg="Invalid value for object {}".format(attr))
+
+            # test int
+            attrs = [k for k in getattr(glob, subcls).writers.keys() if type(getattr(getattr(glob, subcls), k)) == int]
+            for attr in attrs:
+                test_int = random.randint(1, 20)
+                setattr(getattr(glob, subcls), attr, test_int)
+                self.cat.save(glob)
+                glob.refresh()
+                self.assertIsNone(getattr(glob, subcls).dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
+                self.assertEqual(getattr(getattr(glob, subcls), attr), test_int,
+                                 msg="Invalid value for object {}".format(attr))
+
+
 
 

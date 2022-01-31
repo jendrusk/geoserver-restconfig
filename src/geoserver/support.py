@@ -253,6 +253,7 @@ def write_metadata(name):
 class StaticResourceInfo(object):
 
     def __init__(self):
+        self.write_all = True
         self.dom = None
         self.dirty = dict()
 
@@ -276,12 +277,15 @@ class StaticResourceInfo(object):
 
         for k, writer in self.writers.items():
 
-            if k in self.dirty:
-                writer(builder, self.dirty[k])
-
             attr = getattr(self, k)
+
             if issubclass(type(attr), StaticResourceInfo) and attr.dirty:
                 attr.serialize_all(builder)
+            else:
+                if k in self.dirty or self.write_all:
+                    val = self.dirty[k] if self.dirty.get(k) else attr
+                    writer(builder, val)
+
 
     def serialize_all(self, builder):
         builder.start(self.resource_type, dict())
@@ -298,11 +302,12 @@ class StaticResourceInfo(object):
 class ResourceInfo(StaticResourceInfo):
 
     def __init__(self):
+        self.write_all = False
         self.dom = None
         self.dirty = dict()
 
     def _clear_subclasses(self):
-        sbcs = [k for k,v in vars(self).items() if issubclass(v, StaticResourceInfo)]
+        sbcs = [k for k,v in vars(self).items() if issubclass(type(v), StaticResourceInfo)]
         for sbc in sbcs:
             delattr(self, sbc)
 

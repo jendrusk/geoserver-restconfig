@@ -82,7 +82,7 @@ class Settings(StaticResourceInfo):
     }
 
 
-class Jai(ResourceInfo):
+class Jai(StaticResourceInfo):
 
     def __init__(self, dom):
         super(Jai, self).__init__()
@@ -141,6 +141,7 @@ class CoverageAccess(StaticResourceInfo):
 
 class GlobalSettings(ResourceInfo):
     resource_type = "global"
+    save_method = "put"
 
     def __init__(self, catalog):
         super(GlobalSettings, self).__init__()
@@ -166,13 +167,12 @@ class GlobalSettings(ResourceInfo):
     xmlPostRequestLogBufferSize = xml_property("xmlPostRequestLogBufferSize", lambda x: int(x.text))
 
     writers = {
-        'settings': write_subclass("enabled"),
-        'jai': write_subclass("enabled"),
-        'coverageAccess': write_subclass("enabled"),
-        'updateSequence': write_int("enabled"),
-        'featureTypeCacheSize': write_int("enabled"),
-        'globalServices': write_bool("enabled"),
-        'xmlPostRequestLogBufferSize': write_int("enabled")
+        'settings': write_subclass("settings"),
+        'jai': write_subclass("jai"),
+        'coverageAccess': write_subclass("coverageAccess"),
+        'featureTypeCacheSize': write_int("featureTypeCacheSize"),
+        'globalServices': write_bool("globalServices"),
+        'xmlPostRequestLogBufferSize': write_int("xmlPostRequestLogBufferSize")
     }
 
     def __repr__(self):
