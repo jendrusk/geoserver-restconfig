@@ -1346,50 +1346,26 @@ class Catalog(object):
 
         return services
 
-    # global services are enabled by default, enabling services in workspaces using rest is broken in geoserver for now
-    # def create_service(self, ogc_type=None, workspace=None):
-    #
-    #     KNOWN_TYPES = ["wms", "wfs", "wcs", "wmts"]
-    #
-    #     if ogc_type is None:
-    #         logger.error("You have to specify OGC Service Type ({types})".format(types=",".join(KNOWN_TYPES)))
-    #         return None
-    #
-    #     if ogc_type.lower() not in KNOWN_TYPES:
-    #         logger.error("Unknown OGC Service Type (known are: {types})".format(types=",".join(KNOWN_TYPES)))
-    #         return None
-    #
-    #     if workspace is None:
-    #         logger.info("Global services are created by default")
-    #
-    #     if ogc_type.lower() == "wms":
-    #         raise NotImplementedError()
-    #     elif ogc_type.lower() == "wfs":
-    #         raise NotImplementedError()
-    #     elif ogc_type.lower() == "wcs":
-    #         raise NotImplementedError()
-    #     elif ogc_type.lower() == "wmts":
-    #         raise NotImplementedError()
+    def create_user(self, username, password):
+        xml = (
+            "<user>"
+            "<userName>{username}</userName>"
+            "<password>{password}</password>"
+            "<enabled>true</enabled>"
+            "</user>"
+        ).format(username=username, password=password)
 
-    # def create_user(self, name, uri):
-    #     xml = (
-    #         "<namespace>"
-    #         "<prefix>{name}</prefix>"
-    #         "<uri>{uri}</uri>"
-    #         "</namespace>"
-    #     ).format(name=name, uri=uri)
-    #
-    #     headers = {"Content-Type": "application/xml"}
-    #     workspace_url = self.service_url + "/namespaces/"
-    #
-    #     resp = self.http_request(workspace_url, method='post', data=xml, headers=headers)
-    #     if resp.status_code not in (200, 201, 202):
-    #         raise FailedRequestError('Failed to create workspace {} : {}, {}'.format(name, resp.status_code, resp.text))
-    #
-    #     self._cache.pop("{}/workspaces.xml".format(self.service_url), None)
-    #     workspaces = self.get_workspaces(names=name)
-    #     # Can only have one workspace with this name
-    #     return workspaces[0] if workspaces else None
+        headers = {"Content-Type": "application/xml"}
+        users_url = self.service_url + "/security/usergroup/users/"
+
+        resp = self.http_request(users_url, method='post', data=xml, headers=headers)
+        if resp.status_code not in (200, 201, 202):
+            raise FailedRequestError('Failed to create user {} : {}, {}'.format(username, resp.status_code, resp.text))
+
+        self._cache.pop("{}/security/usergroup/users/".format(self.service_url), None)
+        users = self.get_users(names=username)
+        # Can only have one workspace with this name
+        return users[0] if users else None
 
     def get_users(self, names=None):
         '''
