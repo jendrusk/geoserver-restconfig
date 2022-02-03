@@ -1354,10 +1354,12 @@ class Catalog(object):
             logging.warning(f"User {username} already exists")
             tmp_cat = Catalog(service_url=self.service_url, username=username, password=password)
             try:
-                tmp_cat.get_users()
+                tmp_cat.get_version()
             except FailedRequestError as e:
                 logger.error("And we probably have incorrect password")
                 raise FailedRequestError
+
+            return users[0]
 
         xml = (
             "<user>"

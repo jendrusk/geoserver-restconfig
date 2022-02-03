@@ -88,7 +88,7 @@ class SecurityTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.bkp_cat.set_master_pwd(self.bkp_masterpwd)
         self.bkp_cat.set_my_pwd(self.bkp_my_pwd)
-        usrs = [x.user_name for x in self.cat.get_users(names="test_usr12")]
+        usrs = [x for x in self.cat.get_users(names="test_usr12")]
         if len(usrs) > 0:
             self.cat.delete(usrs[0])
 
@@ -141,7 +141,13 @@ class SecurityTests(unittest.TestCase):
 
 
     def test_create_existing_user(self):
-        pass
+        test_user = User(user_name='test_usr12', catalog=self.cat)
+        test_pass = 'test_pas12'
+        self.cat.create_user(username=test_user.user_name, password=test_pass)
+        users = self.cat.get_users(names=test_user.user_name)
+        self.assertEqual(len(users), 1, msg="User creation before test failed")
+        self.cat.create_user(username=test_user.user_name, password=test_pass)
+
 
     def test_create_existing_user_unknown_password(self):
         pass
