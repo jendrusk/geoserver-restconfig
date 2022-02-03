@@ -1347,6 +1347,18 @@ class Catalog(object):
         return services
 
     def create_user(self, username, password):
+
+        # TODO: check if exists
+        users = self.get_users(names=username)
+        if len(users) > 0:
+            logging.warning(f"User {username} already exists")
+            tmp_cat = Catalog(service_url=self.service_url, username=username, password=password)
+            try:
+                tmp_cat.get_users()
+            except FailedRequestError as e:
+                logger.error("And we probably have incorrect password")
+                raise FailedRequestError
+
         xml = (
             "<user>"
             "<userName>{username}</userName>"
@@ -1384,7 +1396,7 @@ class Catalog(object):
         users.extend([user_from_index(self, node) for node in data.findall("user")])
 
         if users and names:
-            return ([ws for ws in users if ws.name in names])
+            return ([ws for ws in users if ws.user_name in names])
 
         return users
 

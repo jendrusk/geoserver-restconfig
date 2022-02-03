@@ -42,7 +42,7 @@ class User(ResourceInfo):
     def href(self):
         return urljoin(
             "{}/".format(self.catalog.service_url),
-            "security/usergroup/users/{}".format(self.user_name)
+            "security/usergroup/user/{}".format(self.user_name)
         )
 
     enabled = xml_property("enabled", lambda x: x.lower() == 'true')
