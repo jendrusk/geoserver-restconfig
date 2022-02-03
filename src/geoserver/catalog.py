@@ -1378,7 +1378,6 @@ class Catalog(object):
 
         self._cache.pop("{}/security/usergroup/users/".format(self.service_url), None)
         users = self.get_users(names=username)
-        # Can only have one workspace with this name
         return users[0] if users else None
 
     def get_users(self, names=None):
@@ -1460,3 +1459,37 @@ class Catalog(object):
 
     def get_global_settings(self):
         return GlobalSettings(self)
+
+    def get_roles(self):
+        url = "{service_url}/security/roles".format(service_url=self.service_url)
+        resp = self.get_xml(rest_url=url)
+        roles = [x.text for x in resp.findall("role")]
+        return roles
+
+    def get_roles_user(self, username):
+        url = "{service_url}/security/roles/user/{user}".format(service_url=self.service_url, user=username)
+        resp = self.get_xml(rest_url=url)
+        roles = [x.text for x in resp.findall("role")]
+        return roles
+
+
+    def add_role_user(self, rolename, username):
+        url = "{service_url}/security/roles/role/{role}/user/{user}".format(
+            service_url=self.service_url, role=rolename, user=username)
+        resp = self.http_request(url, method="post")
+
+        if resp.status_code != 200:
+            raise FailedRequestError(resp.content)
+
+        self._cache.clear()
+
+
+    def del_role_user(self, rolename, username):
+        url = "{service_url}/security/roles/role/{role}/user/{user}".format(
+            service_url=self.service_url, role=rolename, user=username)
+        resp = self.http_request(url, method="delete")
+
+        if resp.status_code != 200:
+            raise FailedRequestError(resp.content)
+
+        self._cache.clear()

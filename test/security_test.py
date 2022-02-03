@@ -149,8 +149,42 @@ class SecurityTests(unittest.TestCase):
         self.cat.create_user(username=test_user.user_name, password=test_pass)
 
 
-    def test_create_existing_user_unknown_password(self):
-        pass
+class RolesTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.cat = Catalog(GSPARAMS['GSURL'], username=GSPARAMS['GSUSER'], password=GSPARAMS['GSPASSWORD'])
+        self.test_usr = "test_usr_role"
+        self.test_pwd = "test_usr_role"
+
+    def tearDown(self) -> None:
+        usr = User(catalog=self.cat, user_name=self.test_usr)
+        self.cat.delete(usr)
+
+    def test_get_all_roles(self):
+        roles = self.cat.get_roles()
+        self.assertGreater(len(roles), 0)
+        self.assertIn("ADMIN", roles)
+
+    def test_get_roles_user(self):
+        roles = self.cat.get_roles_user(username="admin")
+        self.assertGreater(len(roles), 0)
+        self.assertIn("ADMIN", roles)
+
+    def test_add_del_role_user(self):
+        self.cat.create_user(username=self.test_usr, password=self.test_pwd)
+        self.cat.add_role_user(rolename="ADMIN", username=self.test_usr)
+        usr_roles = self.cat.get_roles_user(username=self.test_usr)
+        self.assertIn("ADMIN", usr_roles)
+        tmp_cat = Catalog(service_url=self.cat.service_url, username=self.test_usr, password=self.test_pwd)
+        # If role added user should get response for this
+        tmp_cat.get_users()
+        self.cat.del_role_user(rolename="ADMIN", username=self.test_usr)
+        usr_roles = self.cat.get_roles_user(username=self.test_usr)
+        self.assertNotIn("ADMIN", usr_roles)
+
+
+
+
+
 
 
 
