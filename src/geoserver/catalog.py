@@ -1348,7 +1348,6 @@ class Catalog(object):
 
     def create_user(self, username, password):
 
-        # TODO: check if exists
         users = self.get_users(names=username)
         if len(users) > 0:
             logging.warning(f"User {username} already exists")
