@@ -146,8 +146,8 @@ class Catalog(object):
 
     def http_request(self, url, data=None, method='get', headers={}, files=None):
 
-        if headers.get("accept") is None:
-            headers["accept"] = "application/xml"
+        if headers.get("Accept") is None:
+            headers["Accept"] = "application/xml"
 
         req_method = getattr(self.client, method.lower())
 
