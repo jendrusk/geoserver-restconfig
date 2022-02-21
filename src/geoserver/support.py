@@ -65,16 +65,16 @@ def build_url(base, seg, query=None):
     if query is None or len(query) == 0:
         query_string = ''
     else:
-        query_string = "?" + urlencode(query)
+        query_string = f"?{urlencode(query)}"
     path = '/'.join(seg) + query_string
-    adjusted_base = base.rstrip('/') + '/'
+    adjusted_base = f"{base.rstrip('/')}/"
     return urljoin(str(adjusted_base), str(path))
 
 
 def xml_property(path, converter=lambda x: x.text, default=None):
     def getter(self):
-        if hasattr(self, "_" + path):
-            return getattr(self, "_" + path)
+        if hasattr(self, f"_{path}"):
+            return getattr(self, f"_{path}")
         try:
             if path in self.dirty:
                 return self.dirty[path]
@@ -85,16 +85,15 @@ def xml_property(path, converter=lambda x: x.text, default=None):
                 if node is not None:
                     res = converter(self.dom.find(path))
                     if issubclass(type(res), StaticResourceInfo):
-                        setattr(self, "_" + path, res)
+                        setattr(self, f"_{path}", res)
                     return res
                 return default
         except Exception as e:
             raise AttributeError(e)
 
-
     def setter(self, value):
         self.dirty[path] = value
-        x=1
+        x = 1
 
     def delete(self):
         self.dirty[path] = None
@@ -265,7 +264,6 @@ class StaticResourceInfo(object):
             else:
                 self.dirty[key] = attr
 
-
     def serialize(self, builder):
         # GeoServer will disable the resource if we omit the <enabled> tag,
         # so force it into the dirty dict before writing
@@ -276,7 +274,6 @@ class StaticResourceInfo(object):
             self.dirty['advertised'] = self.advertised
 
         for k, writer in self.writers.items():
-
             if hasattr(self, k) and issubclass(type(getattr(self, k)), StaticResourceInfo):
                 attr = getattr(self, k)
                 if attr.dirty:
@@ -290,7 +287,6 @@ class StaticResourceInfo(object):
                 attr = getattr(self, k)
                 val = self.dirty[k] if self.dirty.get(k) else attr
                 writer(builder, val)
-
 
     def serialize_all(self, builder):
         builder.start(self.resource_type, dict())
@@ -312,7 +308,7 @@ class ResourceInfo(StaticResourceInfo):
         self.dirty = dict()
 
     def _clear_subclasses(self):
-        sbcs = [k for k,v in vars(self).items() if issubclass(type(v), StaticResourceInfo)]
+        sbcs = [k for k, v in vars(self).items() if issubclass(type(v), StaticResourceInfo)]
         for sbc in sbcs:
             delattr(self, sbc)
 
@@ -340,7 +336,7 @@ def prepare_upload_bundle(name, data):
     fd, path = mkstemp()
     zip_file = ZipFile(path, 'w', allowZip64=True)
     for ext, stream in data.items():
-        fname = "%s.%s" % (name, ext)
+        fname = f"{name}.{ext}"
         if (isinstance(stream, string_types)):
             zip_file.write(stream, fname)
         else:
@@ -397,7 +393,7 @@ def dimension_info(builder, metadata):
         if metadata.presentation is not None:
             accepted = ['LIST', 'DISCRETE_INTERVAL', 'CONTINUOUS_INTERVAL']
             if metadata.presentation not in accepted:
-                raise ValueError("metadata.presentation must be one of the following %s" % accepted)
+                raise ValueError(f"metadata.presentation must be one of the following {accepted}")
             else:
                 builder.start("presentation", dict())
                 builder.data(metadata.presentation)
@@ -470,13 +466,13 @@ class DimensionInfo(object):
         name = name.lower()
         found = [i[1] for i in self._lookup if i[0] == name]
         if not found:
-            raise ValueError('invalid multipler: %s' % name)
+            raise ValueError(f'invalid multipler: {name}')
         return found[0] if found else None
 
     def resolution_millis(self):
         '''if set, get the value of resolution in milliseconds'''
         if self.resolution is None or not isinstance(self.resolution, string_types):
-                return self.resolution
+            return self.resolution
         val, mult = self.resolution.split(' ')
         return int(float(val) * self._multipier(mult) * 1000)
 
@@ -493,7 +489,7 @@ class DimensionInfo(object):
         val = seconds / biggest[1]
         if val == int(val):
             val = int(val)
-        return '%s %s' % (val, biggest[0])
+        return f'{val} {biggest[0]}'
 
 
 def md_dimension_info(name, node):
