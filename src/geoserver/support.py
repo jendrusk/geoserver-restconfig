@@ -73,8 +73,8 @@ def build_url(base, seg, query=None):
 
 def xml_property(path, converter=lambda x: x.text, default=None):
     def getter(self):
-        if hasattr(self, "_" + path):
-            return getattr(self, "_" + path)
+        if hasattr(self, f"_{path}"):
+            return getattr(self, f"_{path}")
         try:
             if path in self.dirty:
                 return self.dirty[path]
@@ -85,7 +85,7 @@ def xml_property(path, converter=lambda x: x.text, default=None):
                 if node is not None:
                     res = converter(self.dom.find(path))
                     if issubclass(type(res), StaticResourceInfo):
-                        setattr(self, "_" + path, res)
+                        setattr(self, f"_{path}", res)
                     return res
                 return default
         except Exception as e:
@@ -93,7 +93,7 @@ def xml_property(path, converter=lambda x: x.text, default=None):
 
     def setter(self, value):
         self.dirty[path] = value
-        x=1
+        x = 1
 
     def delete(self):
         self.dirty[path] = None
@@ -264,7 +264,6 @@ class StaticResourceInfo(object):
             else:
                 self.dirty[key] = attr
 
-
     def serialize(self, builder):
         # GeoServer will disable the resource if we omit the <enabled> tag,
         # so force it into the dirty dict before writing
@@ -284,7 +283,6 @@ class StaticResourceInfo(object):
                 if k in self.dirty or self.write_all:
                     val = self.dirty[k] if self.dirty.get(k) else attr
                     writer(builder, val)
-
 
     def serialize_all(self, builder):
         builder.start(self.resource_type, dict())
@@ -306,7 +304,7 @@ class ResourceInfo(StaticResourceInfo):
         self.dirty = dict()
 
     def _clear_subclasses(self):
-        sbcs = [k for k,v in vars(self).items() if issubclass(type(v), StaticResourceInfo)]
+        sbcs = [k for k, v in vars(self).items() if issubclass(type(v), StaticResourceInfo)]
         for sbc in sbcs:
             delattr(self, sbc)
 

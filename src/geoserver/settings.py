@@ -11,7 +11,7 @@
 #########################################################################
 try:
     from urllib.parse import urljoin
-except:
+except BaseException:
     from urlparse import urljoin
 
 from geoserver.support import (
@@ -43,15 +43,14 @@ class Contact(StaticResourceInfo):
     contactPosition = xml_property("contactPosition", read_string)
 
     writers = {
-    "addressCity": write_string("addressCity"),
-    "addressCountry": write_string("addressCountry"),
-    "addressType": write_string("addressType"),
-    "contactEmail": write_string("contactEmail"),
-    "contactOrganization": write_string("contactOrganization"),
-    "contactPerson": write_string("contactPerson"),
-    "contactPosition": write_string("contactPosition")
+        "addressCity": write_string("addressCity"),
+        "addressCountry": write_string("addressCountry"),
+        "addressType": write_string("addressType"),
+        "contactEmail": write_string("contactEmail"),
+        "contactOrganization": write_string("contactOrganization"),
+        "contactPerson": write_string("contactPerson"),
+        "contactPosition": write_string("contactPosition")
     }
-
 
 
 class Settings(StaticResourceInfo):
@@ -71,14 +70,14 @@ class Settings(StaticResourceInfo):
     localWorkspaceIncludesPrefix = xml_property("localWorkspaceIncludesPrefix", read_bool)
 
     writers = {
-    "id": write_string("id"),
-    "contact": write_subclass("contact"),
-    "charset": write_string("charset"),
-    "numDecimals": write_int("numDecimals"),
-    "onlineResource": write_string("onlineResource"),
-    "verbose": write_bool("verbose"),
-    "verboseExceptions": write_bool("verboseExceptions"),
-    "localWorkspaceIncludesPrefix": write_bool("localWorkspaceIncludesPrefix"),
+        "id": write_string("id"),
+        "contact": write_subclass("contact"),
+        "charset": write_string("charset"),
+        "numDecimals": write_int("numDecimals"),
+        "onlineResource": write_string("onlineResource"),
+        "verbose": write_bool("verbose"),
+        "verboseExceptions": write_bool("verboseExceptions"),
+        "localWorkspaceIncludesPrefix": write_bool("localWorkspaceIncludesPrefix"),
     }
 
 
@@ -103,17 +102,17 @@ class Jai(StaticResourceInfo):
     allowNativeWarp = xml_property("allowNativeWarp", read_bool)
 
     writers = {
-    "allowInterpolation": write_bool("allowInterpolation"),
-    "recycling": write_bool("recycling"),
-    "tilePriority": write_int("tilePriority"),
-    "tileThreads": write_int("tileThreads"),
-    "memoryCapacity": write_float("memoryCapacity"),
-    "memoryThreshold": write_float("memoryThreshold"),
-    "imageIOCache": write_bool("imageIOCache"),
-    "pngAcceleration": write_bool("pngAcceleration"),
-    "jpegAcceleration": write_bool("jpegAcceleration"),
-    "allowNativeMosaic": write_bool("allowNativeMosaic"),
-    "allowNativeWarp": write_bool("allowNativeWarp")}
+        "allowInterpolation": write_bool("allowInterpolation"),
+        "recycling": write_bool("recycling"),
+        "tilePriority": write_int("tilePriority"),
+        "tileThreads": write_int("tileThreads"),
+        "memoryCapacity": write_float("memoryCapacity"),
+        "memoryThreshold": write_float("memoryThreshold"),
+        "imageIOCache": write_bool("imageIOCache"),
+        "pngAcceleration": write_bool("pngAcceleration"),
+        "jpegAcceleration": write_bool("jpegAcceleration"),
+        "allowNativeMosaic": write_bool("allowNativeMosaic"),
+        "allowNativeWarp": write_bool("allowNativeWarp")}
 
 
 class CoverageAccess(StaticResourceInfo):
@@ -154,7 +153,7 @@ class GlobalSettings(ResourceInfo):
     @property
     def href(self):
         return urljoin(
-            "{}/".format(self.catalog.service_url),
+            f"{self.catalog.service_url}/",
             "settings"
         )
 
@@ -176,4 +175,4 @@ class GlobalSettings(ResourceInfo):
     }
 
     def __repr__(self):
-        return "{} @ {}".format("settings", self.href)
+        return f"settings @ {self.href}"
