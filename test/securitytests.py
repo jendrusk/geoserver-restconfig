@@ -75,6 +75,7 @@ if GSPARAMS['GS_VERSION']:
 
 
 class SecurityTests(unittest.TestCase):
+
     def setUp(self):
         self.cat = Catalog(GSPARAMS['GSURL'], username=GSPARAMS['GSUSER'], password=GSPARAMS['GSPASSWORD'])
         self.bkp_cat = Catalog(GSPARAMS['GSURL'], username=GSPARAMS['GSUSER'], password=GSPARAMS['GSPASSWORD'])
@@ -112,10 +113,6 @@ class SecurityTests(unittest.TestCase):
         self.assertIsNotNone(new_pwd)
         self.assertEqual(new_pwd, test_pwd)
         self.assertEqual(self.cat.password, test_pwd)
-        self.cat.password = new_pwd
-        self.bkp_cat.password = new_pwd
-        new_master_pwd = self.cat.get_master_pwd()
-        self.assertIsNotNone(new_master_pwd)
 
     def test_create_user(self):
         test_user = User(user_name='test_usr12', catalog=self.cat)
@@ -146,6 +143,7 @@ class SecurityTests(unittest.TestCase):
 
 
 class RolesTests(unittest.TestCase):
+
     def setUp(self) -> None:
         self.cat = Catalog(GSPARAMS['GSURL'], username=GSPARAMS['GSUSER'], password=GSPARAMS['GSPASSWORD'])
         self.test_usr = "test_usr_role"
