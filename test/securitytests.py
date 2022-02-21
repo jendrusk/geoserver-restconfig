@@ -7,7 +7,7 @@ from .utils import GSPARAMS
 import subprocess
 import re
 import time
-from geoserver.catalog import Catalog
+from geoserver.catalog import Catalog, FailedRequestError
 from geoserver.security import User
 
 if GSPARAMS['GEOSERVER_HOME']:
@@ -88,7 +88,10 @@ class SecurityTests(unittest.TestCase):
         self.bkp_cat.set_my_pwd(self.bkp_my_pwd)
         usrs = [x for x in self.cat.get_users(names="test_usr12")]
         if len(usrs) > 0:
-            self.cat.delete(usrs[0])
+            try:
+                self.cat.delete(usrs[0])
+            except FailedRequestError as e:
+                print(f"User DELETE endpoint not available! {e}")
 
     def test_get_users(self):
         users = self.cat.get_users()
@@ -97,7 +100,6 @@ class SecurityTests(unittest.TestCase):
     def test_get_master_pwd(self):
         master_pwd = self.cat.get_master_pwd()
         self.assertIsNotNone(master_pwd)
-        self.assertEqual(master_pwd, "geoserver")
 
     def test_set_master_pwd(self):
         test_pwd = ''.join(random.sample(string.ascii_lowercase, 10))
@@ -119,7 +121,10 @@ class SecurityTests(unittest.TestCase):
         test_pass = 'test_pas12'
         users = self.cat.get_users(names=test_user.user_name)
         if len(users) > 0:
-            self.cat.delete(test_user)
+            try:
+                self.cat.delete(test_user)
+            except FailedRequestError as e:
+                print(f"User DELETE endpoint not available! {e}")
         users = self.cat.get_users(names=test_user.user_name)
         self.assertEqual(len(users), 0, msg="Test user exists and I cant delete it")
         self.cat.create_user(username=test_user.user_name, password=test_pass)
@@ -151,7 +156,11 @@ class RolesTests(unittest.TestCase):
 
     def tearDown(self) -> None:
         usr = User(catalog=self.cat, user_name=self.test_usr)
-        self.cat.delete(usr)
+        if usr:
+            try:
+                self.cat.delete(usr)
+            except FailedRequestError as e:
+                print(f"User DELETE endpoint not available! {e}")
 
     def test_get_all_roles(self):
         roles = self.cat.get_roles()

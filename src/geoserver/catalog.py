@@ -227,7 +227,6 @@ class Catalog(object):
             "Content-type": "application/xml",
             "Accept": "application/xml"
         }
-
         resp = self.http_request(rest_url, method='delete', headers=headers)
         if resp.status_code != 200:
             raise FailedRequestError(f'Failed to make DELETE request: {resp.status_code}, {resp.text}')
