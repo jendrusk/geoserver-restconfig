@@ -257,7 +257,7 @@ class Catalog(object):
             raw_text = cached_response[1]
             return parse_or_raise(raw_text)
         else:
-            resp = self.http_request(rest_url)
+            resp = self.http_request(rest_url, headers={"Accept": "application/xml"})
             if resp.status_code == 200:
                 content = resp.content
                 if isinstance(content, bytes):
@@ -1358,7 +1358,6 @@ class Catalog(object):
         return users
 
     def get_master_pwd(self):
-
         url = f"{self.service_url}/security/masterpw.xml"
         resp = self.http_request(url)
         masterpwd = None
@@ -1386,7 +1385,6 @@ class Catalog(object):
                 "</masterPassword>").format(old_pwd=old_pwd, new_pwd=new_pwd)
         resp = self.http_request(url, method="put", data=body, headers=headers)
 
-        masterpwd = None
         if resp.status_code == 200:
             res = new_pwd
             self.reload()
@@ -1407,7 +1405,6 @@ class Catalog(object):
             self.reload()
             self.password = new_pwd
             self.reload()
-
         else:
             raise FailedRequestError(resp.content)
         return res

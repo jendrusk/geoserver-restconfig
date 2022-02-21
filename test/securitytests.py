@@ -92,7 +92,6 @@ class SecurityTests(unittest.TestCase):
     def test_get_master_pwd(self):
         master_pwd = self.cat.get_master_pwd()
         self.assertIsNotNone(master_pwd)
-        self.assertEqual(master_pwd, "geoserver")
 
     def test_set_master_pwd(self):
         test_pwd = ''.join(random.sample(string.ascii_lowercase, 10))
@@ -108,7 +107,3 @@ class SecurityTests(unittest.TestCase):
         self.assertIsNotNone(new_pwd)
         self.assertEqual(new_pwd, test_pwd)
         self.assertEqual(self.cat.password, test_pwd)
-        self.cat.password = new_pwd
-        self.bkp_cat.password = new_pwd
-        new_master_pwd = self.cat.get_master_pwd()
-        self.assertIsNotNone(new_master_pwd)
