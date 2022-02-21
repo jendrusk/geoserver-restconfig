@@ -145,10 +145,6 @@ class Catalog(object):
         self.client.mount(f"{parsed_url.scheme}://", HTTPAdapter(max_retries=retry))
 
     def http_request(self, url, data=None, method='get', headers={}, files=None):
-
-        if headers.get("Accept") is None:
-            headers["Accept"] = "application/xml"
-
         req_method = getattr(self.client, method.lower())
 
         if self.access_token:
@@ -1362,13 +1358,13 @@ class Catalog(object):
         ).format(username=username, password=password)
 
         headers = {"Content-Type": "application/xml"}
-        users_url = self.service_url + "/security/usergroup/users/"
+        users_url = f"{self.service_url}/security/usergroup/users/"
 
         resp = self.http_request(users_url, method='post', data=xml, headers=headers)
         if resp.status_code not in (200, 201, 202):
-            raise FailedRequestError('Failed to create user {} : {}, {}'.format(username, resp.status_code, resp.text))
+            raise FailedRequestError(f'Failed to create user {username} : {resp.status_code}, {resp.text}')
 
-        self._cache.pop("{}/security/usergroup/users/".format(self.service_url), None)
+        self._cache.pop(f"{self.service_url}/security/usergroup/users/", None)
         users = self.get_users(names=username)
         return users[0] if users else None
 
@@ -1393,7 +1389,7 @@ class Catalog(object):
         return users
 
     def get_master_pwd(self):
-        url = "{}/security/masterpw.xml".format(self.service_url)
+        url = f"{self.service_url}/security/masterpw.xml"
         resp = self.http_request(url)
         masterpwd = None
         if resp.status_code == 200:
@@ -1447,20 +1443,19 @@ class Catalog(object):
         return GlobalSettings(self)
 
     def get_roles(self):
-        url = "{service_url}/security/roles".format(service_url=self.service_url)
+        url = f"{self.service_url}/security/roles"
         resp = self.get_xml(rest_url=url)
         roles = [x.text for x in resp.findall("role")]
         return roles
 
     def get_roles_user(self, username):
-        url = "{service_url}/security/roles/user/{user}".format(service_url=self.service_url, user=username)
+        url = f"{self.service_url}/security/roles/user/{username}"
         resp = self.get_xml(rest_url=url)
         roles = [x.text for x in resp.findall("role")]
         return roles
 
     def add_role_user(self, rolename, username):
-        url = "{service_url}/security/roles/role/{role}/user/{user}".format(
-            service_url=self.service_url, role=rolename, user=username)
+        url = f"{self.service_url}/security/roles/role/{rolename}/user/{username}"
         resp = self.http_request(url, method="post")
 
         if resp.status_code != 200:
@@ -1469,8 +1464,7 @@ class Catalog(object):
         self._cache.clear()
 
     def del_role_user(self, rolename, username):
-        url = "{service_url}/security/roles/role/{role}/user/{user}".format(
-            service_url=self.service_url, role=rolename, user=username)
+        url = f"{self.service_url}/security/roles/role/{rolename}/user/{username}"
         resp = self.http_request(url, method="delete")
 
         if resp.status_code != 200:
