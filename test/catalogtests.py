@@ -179,8 +179,7 @@ class CatalogTests(unittest.TestCase):
 
     def testUsers(self):
         users = self.cat.get_users()
-        x=1
-
+        x = 1
 
     def testStores(self):
         self.assertEqual(0, len(self.cat.get_stores(names="nonexistentstore")))

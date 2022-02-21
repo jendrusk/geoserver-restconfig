@@ -1348,7 +1348,7 @@ class Catalog(object):
         elif isinstance(names, string_types):
             names = [s.strip() for s in names.split(',') if s.strip()]
 
-        data = self.get_xml("{}/security/usergroup/users/".format(self.service_url))
+        data = self.get_xml(f"{self.service_url}/security/usergroup/users/")
         users = []
         users.extend([user_from_index(self, node) for node in data.findall("user")])
 
@@ -1359,7 +1359,7 @@ class Catalog(object):
 
     def get_master_pwd(self):
 
-        url = "{}/security/masterpw.xml".format(self.service_url)
+        url = f"{self.service_url}/security/masterpw.xml"
         resp = self.http_request(url)
         masterpwd = None
         if resp.status_code == 200:
@@ -1373,14 +1373,13 @@ class Catalog(object):
 
         return masterpwd
 
-
     def set_master_pwd(self, new_pwd):
         old_pwd = self.get_master_pwd()
         if old_pwd == new_pwd:
             return new_pwd
 
         headers = {"Content-Type": "application/xml"}
-        url = "{}/security/masterpw.xml".format(self.service_url)
+        url = f"{self.service_url}/security/masterpw.xml"
         body = ("<masterPassword>"
                 "<oldMasterPassword>{old_pwd}</oldMasterPassword>"
                 "<newMasterPassword>{new_pwd}</newMasterPassword>"
@@ -1397,7 +1396,7 @@ class Catalog(object):
 
     def set_my_pwd(self, new_pwd):
         headers = {"Content-Type": "application/xml"}
-        url = "{}/security/self/password.xml".format(self.service_url)
+        url = f"{self.service_url}/security/self/password.xml"
         body = ("<userPassword>"
                 "<newPassword>{new_pwd}</newPassword>"
                 "</userPassword>").format(new_pwd=new_pwd)

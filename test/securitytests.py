@@ -13,30 +13,27 @@ if GSPARAMS['GEOSERVER_HOME']:
     dest = GSPARAMS['DATA_DIR']
     data = os.path.join(GSPARAMS['GEOSERVER_HOME'], 'data/release', '')
     if dest:
-        os.system('rsync -v -a --delete %s %s' %
-                  (data, os.path.join(dest, '')))
+        os.system(f"rsync -v -a --delete {data} {os.path.join(dest, '')}")
     else:
-        os.system('git clean -dxf -- %s' % data)
-    os.system("curl -XPOST --user '{user}':'{password}' '{url}/reload'".format(
-        user=GSPARAMS['GSUSER'], password=GSPARAMS['GSPASSWORD'], url=GSPARAMS['GSURL']))
+        os.system(f'git clean -dxf -- {data}')
+    os.system(f"curl -XPOST --user '{GSPARAMS['GSUSER']}':'{GSPARAMS['GSPASSWORD']}' '{GSPARAMS['GSURL']}/reload'")
 
 if GSPARAMS['GS_VERSION']:
-    subprocess.Popen(["rm", "-rf", GSPARAMS['GS_BASE_DIR'] + "/gs"]).communicate()
-    subprocess.Popen(["mkdir", GSPARAMS['GS_BASE_DIR'] + "/gs"]).communicate()
+    subprocess.Popen(["rm", "-rf", f"{GSPARAMS['GS_BASE_DIR']}/gs"]).communicate()
+    subprocess.Popen(["mkdir", f"{GSPARAMS['GS_BASE_DIR']}/gs"]).communicate()
     subprocess.Popen(
         [
             "wget",
             "http://central.maven.org/maven2/org/eclipse/jetty/jetty-runner/9.4.5.v20170502/jetty-runner-9.4.5.v20170502.jar",
-            "-P", GSPARAMS['GS_BASE_DIR'] + "/gs"
+            "-P", f"{GSPARAMS['GS_BASE_DIR']}/gs"
         ]
     ).communicate()
 
     subprocess.Popen(
         [
             "wget",
-            "https://build.geoserver.org/geoserver/" + GSPARAMS['GS_VERSION'] + "/geoserver-" + GSPARAMS[
-                'GS_VERSION'] + "-latest-war.zip",
-            "-P", GSPARAMS['GS_BASE_DIR'] + "/gs"
+            f"https://build.geoserver.org/geoserver/{GSPARAMS['GS_VERSION']}/geoserver-{GSPARAMS['GS_VERSION']}-latest-war.zip",
+            "-P", f"{GSPARAMS['GS_BASE_DIR']}/gs"
         ]
     ).communicate()
 
@@ -45,8 +42,8 @@ if GSPARAMS['GS_VERSION']:
             "unzip",
             "-o",
             "-d",
-            GSPARAMS['GS_BASE_DIR'] + "/gs",
-            GSPARAMS['GS_BASE_DIR'] + "/gs/geoserver-" + GSPARAMS['GS_VERSION'] + "-latest-war.zip"
+            f"{GSPARAMS['GS_BASE_DIR']}/gs",
+            f"{GSPARAMS['GS_BASE_DIR']}/gs/geoserver-{GSPARAMS['GS_VERSION']}-latest-war.zip"
         ]
     ).communicate()
 
@@ -59,15 +56,15 @@ if GSPARAMS['GS_VERSION']:
     else:
         java_executable = "/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java"
 
-    print("geoserver_short_version: {}".format(geoserver_short_version))
-    print("java_executable: {}".format(java_executable))
+    print(f"geoserver_short_version: {geoserver_short_version}")
+    print(f"java_executable: {java_executable}")
     proc = subprocess.Popen(
         [
             java_executable,
             "-Xmx1024m",
             "-Dorg.eclipse.jetty.server.webapp.parentLoaderPriority=true",
-            "-jar", GSPARAMS['GS_BASE_DIR'] + "/gs/jetty-runner-9.4.5.v20170502.jar",
-            "--path", "/geoserver", GSPARAMS['GS_BASE_DIR'] + "/gs/geoserver.war"
+            "-jar", f"{GSPARAMS['GS_BASE_DIR']}/gs/jetty-runner-9.4.5.v20170502.jar",
+            "--path", "/geoserver", f"{GSPARAMS['GS_BASE_DIR']}/gs/geoserver.war"
         ],
         stdout=FNULL, stderr=subprocess.STDOUT
     )
@@ -90,7 +87,7 @@ class SecurityTests(unittest.TestCase):
 
     def test_get_users(self):
         users = self.cat.get_users()
-        self.assertGreater(len(users),0)
+        self.assertGreater(len(users), 0)
 
     def test_get_master_pwd(self):
         master_pwd = self.cat.get_master_pwd()
@@ -115,6 +112,3 @@ class SecurityTests(unittest.TestCase):
         self.bkp_cat.password = new_pwd
         new_master_pwd = self.cat.get_master_pwd()
         self.assertIsNotNone(new_master_pwd)
-
-
-

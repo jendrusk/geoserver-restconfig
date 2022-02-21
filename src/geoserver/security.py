@@ -11,7 +11,7 @@
 #########################################################################
 try:
     from urllib.parse import urljoin
-except:
+except BaseException:
     from urlparse import urljoin
 
 from geoserver.support import ResourceInfo, xml_property, write_bool
@@ -41,8 +41,8 @@ class User(ResourceInfo):
     @property
     def href(self):
         return urljoin(
-            "{}/".format(self.catalog.service_url),
-            "security/usergroup/users/{}".format(self.user_name)
+            f"{self.catalog.service_url}/",
+            f"security/usergroup/users/{self.user_name}"
         )
 
     enabled = xml_property("enabled", lambda x: x.lower() == 'true')
@@ -51,4 +51,4 @@ class User(ResourceInfo):
     }
 
     def __repr__(self):
-        return "{} @ {}".format(self.user_name, self.href)
+        return f"{self.user_name} @ {self.href}"
