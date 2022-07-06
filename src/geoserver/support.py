@@ -128,6 +128,21 @@ def attribute_list(node):
         return [n.text for n in node.findall("attribute/name")]
 
 
+def read_int_list(node):
+    return [int(x.text) for x in node.findall("int")]
+
+def write_int_list(name):
+    def write(builder, int_list):
+        builder.start(name, dict())
+        for elem in int_list:
+            builder.start("int", dict())
+            builder.data(str(elem))
+            builder.end("int")
+        builder.end(name)
+
+    return write
+
+
 def key_value_pairs(node):
     if node is not None:
         return dict((entry.attrib['key'], entry.text) for entry in node.findall("entry"))
@@ -281,12 +296,12 @@ class StaticResourceInfo(object):
             elif k in self.dirty:
                 val = self.dirty[k]
                 writer(builder, val)
-            elif self.write_all:
-                attr = None
             elif self.write_all and hasattr(self, k):
                 attr = getattr(self, k)
                 val = self.dirty[k] if self.dirty.get(k) else attr
                 writer(builder, val)
+            elif self.write_all:
+                attr = None
 
     def serialize_all(self, builder):
         builder.start(self.resource_type, dict())
@@ -752,3 +767,22 @@ def resource_from_url(url, workspace):
         return split_path[split_path.index(resource_type) + 1]
     else:
         return None
+
+
+def read_extent(node):
+    order = ["minx", "miny", "maxx", "maxy"]
+    return {k: float(v.text) for k, v in zip(order, node.find("coords").findall("double"))}
+
+
+def write_extent(name):
+    def write(builder, ext):
+        order = ["minx", "miny", "maxx", "maxy"]
+        builder.start(name, dict())
+        builder.start("coords", dict())
+        for o in order:
+            builder.start("double", dict())
+            builder.data(str(ext[o]))
+            builder.end("double")
+        builder.end("coords")
+        builder.end(name)
+    return write
