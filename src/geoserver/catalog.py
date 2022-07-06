@@ -28,6 +28,7 @@ from geoserver.layergroup import LayerGroup, UnsavedLayerGroup
 from geoserver.workspace import workspace_from_index, Workspace
 from geoserver.security import user_from_index
 from geoserver.settings import GlobalSettings
+from geoserver.gwc_layer import gwclayer_from_index
 import os
 import re
 import base64
@@ -1491,3 +1492,22 @@ class Catalog(object):
             raise FailedRequestError(resp.content)
 
         self._cache.clear()
+
+    @property
+    def gwc_url(self):
+        return self.service_url.replace("/rest", "/gwc/rest")
+
+    def get_gwc_layers(self):
+        url = "{gwc_url}/layers".format(gwc_url=self.gwc_url)
+
+        data = self.get_xml(url)
+        gwclayers = []
+
+        a = [x for x in data.findall("layer")]
+
+        gwclayers.extend([gwclayer_from_index(self, node) for node in data.findall("layer")])
+        _ = [x.fetch() for x in gwclayers]
+
+        return gwclayers
+
+
