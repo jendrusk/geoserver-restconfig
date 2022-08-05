@@ -29,6 +29,7 @@ from geoserver.workspace import workspace_from_index, Workspace
 from geoserver.security import user_from_index
 from geoserver.settings import GlobalSettings
 from geoserver.gwc_layer import gwclayer_from_index
+from geoserver.gwc_diskquota import gwcquotaconfiguration_from_index
 import os
 import re
 import base64
@@ -1492,5 +1493,10 @@ class Catalog(object):
         _ = [x.fetch() for x in gwclayers]
 
         return gwclayers
+
+    def get_gwc_quota(self):
+        url = "{gwc_url}/diskquota".format(gwc_url=self.gwc_url)
+        gwc_quota = gwcquotaconfiguration_from_index(catalog=self,href=url)
+        return gwc_quota
 
 

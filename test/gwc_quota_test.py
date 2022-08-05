@@ -9,6 +9,7 @@ import re
 import time
 from geoserver.catalog import Catalog
 from geoserver.security import User
+from geoserver.gwc_diskquota import GwcQuotaConfiguration
 
 if GSPARAMS['GEOSERVER_HOME']:
     dest = GSPARAMS['DATA_DIR']
@@ -76,87 +77,84 @@ if GSPARAMS['GS_VERSION']:
     print("Sleep (90)...")
     time.sleep(40)
 
-class GWCLayerTests(unittest.TestCase):
+ENUMS = {
+    'cacheCleanUpUnits': ['SECONDS', 'MINUTES', 'HOURS', 'DAYS'],
+    'globalExpirationPolicyName': ['LRU', 'LSU']
+}
+
+
+class GWCQuotaSeetingsTests(unittest.TestCase):
     def setUp(self):
         self.cat = Catalog(GSPARAMS['GSURL'], username=GSPARAMS['GSUSER'], password=GSPARAMS['GSPASSWORD'])
         self.cat2 = Catalog(GSPARAMS['GSURL'], username=GSPARAMS['GSUSER'], password=GSPARAMS['GSPASSWORD'])
         self.gs_version = self.cat.get_short_version()
-        self.exclude_attrs = ['id', 'name']
+        self.exclude_attrs = []
+        self.exclude_attrs += [x for x in ENUMS.keys()]
 
     def tearDown(self) -> None:
         pass
 
-    def test_get_layers(self):
-        gwc_layers = self.cat.get_gwc_layers()
-        self.assertGreater(len(gwc_layers),0)
+    def test_get_quota(self):
+        lq = self.cat.get_gwc_quota()
+        self.assertIsInstance(lq, GwcQuotaConfiguration)
 
     def test_simple_attrs(self):
 
-        gwc_layers = self.cat.get_gwc_layers()
-        gwc_layer = gwc_layers[0]
+        gwc_quota = self.cat.get_gwc_quota()
 
         # test boolean
-        attrs = [k for k, v in gwc_layer.writers.items() if isinstance(getattr(gwc_layer, k), bool) and k not in self.exclude_attrs]
-        # attrs = [k for k, v in gwc_layer.writers.items() if isinstance(getattr(gwc_layer, k), bool)]
+        attrs = [k for k, v in gwc_quota.writers.items() if isinstance(getattr(gwc_quota, k), bool) and k not in self.exclude_attrs]
         for attr in attrs:
-            setattr(gwc_layer, attr, False)
-            self.cat.save(gwc_layer)
-            gwc_layer.refresh()
-            self.assertIsNone(gwc_layer.dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
-            self.assertFalse(getattr(gwc_layer, attr))
-            setattr(gwc_layer, attr, True)
-            self.cat.save(gwc_layer)
-            gwc_layer.refresh()
-            self.assertIsNone(gwc_layer.dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
-            self.assertTrue(getattr(gwc_layer, attr), msg="Invalid value for object {}".format(attr))
+            setattr(gwc_quota, attr, False)
+            self.cat.save(gwc_quota)
+            gwc_quota.refresh()
+            self.assertIsNone(gwc_quota.dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
+            self.assertFalse(getattr(gwc_quota, attr))
+            setattr(gwc_quota, attr, True)
+            self.cat.save(gwc_quota)
+            gwc_quota.refresh()
+            self.assertIsNone(gwc_quota.dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
+            self.assertTrue(getattr(gwc_quota, attr), msg="Invalid value for object {}".format(attr))
 
         # test string
-        attrs = [k for k, v in gwc_layer.writers.items() if
-                 isinstance(getattr(gwc_layer, k), str) and k not in self.exclude_attrs]
+        attrs = [k for k, v in gwc_quota.writers.items() if
+                 isinstance(getattr(gwc_quota, k), str) and k not in self.exclude_attrs]
         for attr in attrs:
             test_str = ''.join(random.sample(string.ascii_lowercase, 10))
-            setattr(gwc_layer, attr, test_str)
-            self.cat.save(gwc_layer)
-            gwc_layer.refresh()
-            self.assertIsNone(gwc_layer.dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
-            self.assertEqual(getattr(gwc_layer, attr), test_str, msg="Invalid value for object {}".format(attr))
+            setattr(gwc_quota, attr, test_str)
+            self.cat.save(gwc_quota)
+            gwc_quota.refresh()
+            self.assertIsNone(gwc_quota.dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
+            self.assertEqual(getattr(gwc_quota, attr), test_str, msg="Invalid value for object {}".format(attr))
 
         # test int
-        attrs = [k for k in gwc_layer.writers.keys() if type(getattr(gwc_layer, k)) == int and k not in self.exclude_attrs]
+        attrs = [k for k in gwc_quota.writers.keys() if type(getattr(gwc_quota, k)) == int and k not in self.exclude_attrs]
         for attr in attrs:
             test_int = random.randint(1, 20)
-            setattr(gwc_layer, attr, test_int)
-            self.cat.save(gwc_layer)
-            gwc_layer.refresh()
-            self.assertIsNone(gwc_layer.dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
-            self.assertEqual(getattr(gwc_layer, attr), test_int, msg="Invalid value for object {}".format(attr))
+            setattr(gwc_quota, attr, test_int)
+            self.cat.save(gwc_quota)
+            gwc_quota.refresh()
+            self.assertIsNone(gwc_quota.dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
+            self.assertEqual(getattr(gwc_quota, attr), test_int, msg="Invalid value for object {}".format(attr))
 
-    def test_mime_formats(self):
+    def test_enums(self):
+        gwc_quota = self.cat.get_gwc_quota()
+        for attr, vals in ENUMS.items():
+            test_int = random.randint(0, len(vals)-1)
+            setattr(gwc_quota, attr, vals[test_int])
+            self.cat.save(gwc_quota)
+            gwc_quota.refresh()
+            self.assertIsNone(gwc_quota.dirty.get(attr), msg="Attribute {} still in dirty list".format(attr))
+            self.assertEqual(getattr(gwc_quota, attr), vals[test_int], msg="Invalid value for object {}".format(attr))
 
-        vector_formats = [
-            'application/vnd.mapbox-vector-tile',
-            'application/json;type=geojson',
-            'application/json;type=topojson'
-        ]
 
-        gwc_layers = self.cat.get_gwc_layers()
-        gwc_layer = gwc_layers[0]
+    def test_global_quota(self):
+        gwc_quota = self.cat.get_gwc_quota()
+        test_int = random.randint(0, 100)
+        gwc_quota.bt = test_int
+        self.cat.save(gwc_quota)
+        gwc_quota.refresh()
+        self.assertIsNone(gwc_quota.dirty.get('bt'), msg="Attribute {} still in dirty list".format('bt'))
+        self.assertEqual(getattr(gwc_quota, 'bt'), test_int, msg="Invalid value for object {}".format('bt'))
+        pass
 
-        old_formats = gwc_layer.mimeFormats
-        new_formats = gwc_layer.mimeFormats
-        for vf in vector_formats:
-            new_formats.append(vf)
-        gwc_layer.mimeFormats = new_formats
-        self.cat.save(gwc_layer)
-        gwc_layer.refresh()
-
-        self.assertIsNone(gwc_layer.dirty.get('mimeFormats'), msg="Attribute {} still in dirty list".format('mimeFormats'))
-        for vf in vector_formats:
-            self.assertIn(vf, gwc_layer.mimeFormats, msg="Invalid value for object {}".format(vf))
-
-        gwc_layer.mimeFormats = old_formats
-        self.cat.save(gwc_layer)
-        gwc_layer.refresh()
-
-        for vf in vector_formats:
-            self.assertNotIn(vf, gwc_layer.mimeFormats, msg="Invalid value for object {}".format(vf))
