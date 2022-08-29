@@ -28,8 +28,9 @@ from geoserver.layergroup import LayerGroup, UnsavedLayerGroup
 from geoserver.workspace import workspace_from_index, Workspace
 from geoserver.security import user_from_index
 from geoserver.settings import GlobalSettings
-from geoserver.gwc_layer import gwclayer_from_index
 from geoserver.gwc_diskquota import gwcquotaconfiguration_from_index
+from geoserver.gwc_gridset import GridSet, gwcgridset_from_index
+from geoserver.gwc_layer import gwclayer_from_index
 import os
 import re
 import base64
@@ -1499,4 +1500,18 @@ class Catalog(object):
         gwc_quota = gwcquotaconfiguration_from_index(catalog=self,href=url)
         return gwc_quota
 
+    def get_gwc_gridsets(self):
+        url = "{gwc_url}/gridsets".format(gwc_url=self.gwc_url)
+        data = self.get_xml(url)
+        res = [gwcgridset_from_index(self, node) for node in data.findall('gridSet')]
+        return res
+
+    def get_gwc_gridset(self, name):
+        gs = self.get_gwc_gridsets()
+        gsf = [x for x in gs if x.name == name]
+        return gsf[0] if len(gsf) > 0 else None
+
+
+    def create_gwc_gridset(self, name):
+        return GridSet(catalog=self, gridset_name=name)
 

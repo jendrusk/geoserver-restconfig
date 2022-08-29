@@ -156,5 +156,4 @@ class GWCQuotaSeetingsTests(unittest.TestCase):
         gwc_quota.refresh()
         self.assertIsNone(gwc_quota.dirty.get('bt'), msg="Attribute {} still in dirty list".format('bt'))
         self.assertEqual(getattr(gwc_quota, 'bt'), test_int, msg="Invalid value for object {}".format('bt'))
-        pass
 

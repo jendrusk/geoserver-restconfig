@@ -143,6 +143,22 @@ def write_int_list(name):
     return write
 
 
+def read_float_list(node):
+    res = [float(x.text) for x in node.findall("double")]
+    return res
+
+def write_float_list(name):
+    def write(builder, int_list):
+        if int_list is not None and len(int_list) > 0:
+            builder.start(name, dict())
+            for elem in int_list:
+                builder.start("double", dict())
+                builder.data(str(elem))
+                builder.end("double")
+            builder.end(name)
+
+    return write
+
 def key_value_pairs(node):
     if node is not None:
         return dict((entry.attrib['key'], entry.text) for entry in node.findall("entry"))
@@ -785,4 +801,18 @@ def write_extent(name):
             builder.end("double")
         builder.end("coords")
         builder.end(name)
+    return write
+
+
+def read_srs(node):
+    return int(node.find('number').text)
+
+
+def write_srs(name):
+    def write(builder, srs):
+            builder.start(name, dict())
+            builder.start('number', dict())
+            builder.data(str(srs))
+            builder.end('number')
+            builder.end(name)
     return write
